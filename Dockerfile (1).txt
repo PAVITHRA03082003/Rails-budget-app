@@ -1,0 +1,34 @@
+# Dockerfile
+
+FROM ruby:3.1.2
+
+# Install dependencies
+RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
+
+# Set environment
+ENV RAILS_ENV=development
+
+# Set working directory
+WORKDIR /app
+
+# Install yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && apt-get install -y yarn
+
+# Copy Gemfiles
+COPY Gemfile Gemfile.lock ./
+
+# Install gems
+RUN bundle install
+
+# Copy the rest of the app
+COPY . .
+
+# Add entrypoint
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
+# Precompile assets & run server
+CMD ["rails", "server", "-b", "0.0.0.0"]
